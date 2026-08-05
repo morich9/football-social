@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>فوتبال سوشال</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0A1F16;
+    --panel: #12291D;
+    --panel-alt: #16331F;
+    --line: #234631;
+    --ink: #F1F3EA;
+    --ink-dim: #8FA894;
+    --gold: #F0B429;
+    --red: #E8492C;
+    --green-bright: #4ADE80;
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: 'Vazirmatn', sans-serif;
+    background: radial-gradient(circle at 50% -10%, #133525 0%, var(--bg) 55%);
+    color: var(--ink);
+    margin: 0;
+    min-height: 100vh;
+    padding: 32px 16px 80px;
+  }
+
+  .wrap { max-width: 620px; margin: 0 auto; }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .brand h1 {
+    font-size: 20px;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .live-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(232, 73, 44, 0.12);
+    border: 1px solid rgba(232, 73, 44, 0.4);
+    color: var(--red);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 5px 10px;
+    border-radius: 999px;
+  }
+
+  .live-dot {
+    width: 6px; height: 6px;
+    background: var(--red);
+    border-radius: 50%;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(232,73,44,0.5); }
+    50% { opacity: 0.5; box-shadow: 0 0 0 5px rgba(232,73,44,0); }
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  #login-box h3 { margin-top: 0; font-size: 15px; color: var(--ink-dim); font-weight: 600; }
+
+  input, textarea {
+    width: 100%;
+    background: var(--panel-alt);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    border-radius: 10px;
+    padding: 11px 13px;
+    font-family: 'Vazirmatn', sans-serif;
+    font-size: 14px;
+    margin: 6px 0;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus, textarea:focus { border-color: var(--gold); }
+  textarea { resize: vertical; min-height: 60px; }
+
+  button {
+    width: 100%;
+    background: var(--gold);
+    color: #201400;
+    border: none;
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-family: 'Vazirmatn', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: filter 0.15s, transform 0.1s;
+  }
+  button:hover { filter: brightness(1.08); }
+  button:active { transform: scale(0.98); }
+
+  #login-status { color: var(--red); font-size: 13px; margin: 4px 0 0; }
+
+  #app-box { display: none; }
+
+  .scoreboard {
+    text-align: center;
+    padding: 22px 16px;
+    background:
+      linear-gradient(180deg, rgba(240,180,41,0.06), transparent 60%),
+      var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+  }
+
+  .scoreboard .vs-line {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: 0.02em;
+  }
+
+  .scoreboard .vs-line .vs {
+    color: var(--gold);
+    font-size: 15px;
+    margin: 0 10px;
+  }
+
+  .scoreboard .meta {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--ink-dim);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.04em;
+  }
+
+  #profile-box { display: none; }
+
+  .fan-card-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .avatar {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), #c98a1c);
+    color: #201400;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800;
+    font-size: 17px;
+    flex-shrink: 0;
+  }
+
+  #profile-summary {
+    font-size: 13px;
+    color: var(--ink-dim);
+    line-height: 1.6;
+  }
+  #profile-summary b { color: var(--ink); font-weight: 700; }
+
+  .profile-fields { display: grid; gap: 8px; margin-top: 10px; }
+
+  details.profile-editor summary {
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--ink-dim);
+    font-weight: 600;
+    margin-top: 10px;
+    user-select: none;
+  }
+
+  .feed-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink-dim);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin: 22px 4px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .feed-title::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+
+  #comments {
+    position: relative;
+    padding-inline-start: 0;
+  }
+
+  .comment {
+    position: relative;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    border-radius: 12px;
+    padding: 12px 14px 10px;
+    margin-bottom: 10px;
+  }
+
+  .minute-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--bg);
+    background: var(--green-bright);
+    border-radius: 999px;
+    padding: 2px 8px;
+    direction: ltr;
+  }
+
+  .comment-body {
+    margin-top: 8px;
+    font-size: 14.5px;
+    line-height: 1.6;
+    color: var(--ink);
+  }
+
+  .comment-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .pill-btn {
+    width: auto;
+    background: var(--panel-alt);
+    color: var(--ink-dim);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin: 0;
+  }
+  .pill-btn:hover { color: var(--ink); border-color: var(--gold); }
+
+  .reaction-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--gold);
+  }
+
+  .reply-box { display: none; margin-top: 10px; }
+  .reply-box textarea { min-height: 44px; font-size: 13px; }
+  .reply-box button { background: var(--panel-alt); color: var(--ink); border: 1px solid var(--line); }
+
+  .replies {
+    margin-top: 10px;
+    padding-inline-start: 14px;
+    border-inline-start: 2px solid var(--line);
+    display: grid;
+    gap: 6px;
+  }
+  .reply-item {
+    font-size: 13px;
+    color: var(--ink-dim);
+    line-height: 1.5;
+  }
+
+  .composer { margin-top: 20px; }
+  .composer-row { display: flex; gap: 8px; align-items: flex-end; }
+  .composer-row input { width: 90px; text-align: center; direction: ltr; font-family: 'JetBrains Mono', monospace; }
+  .composer-row button { width: auto; padding: 11px 20px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="brand">
+    <h1>⚽ فوتبال سوشال</h1>
+    <span class="live-pill"><span class="live-dot"></span>زنده</span>
+  </div>
+
+  <div id="login-box" class="card">
+    <h3>ورود به حساب</h3>
+    <input id="username" placeholder="نام کاربری" value="ali">
+    <input id="password" type="password" placeholder="رمز عبور" value="123456">
+    <button onclick="login()">ورود</button>
+    <p id="login-status"></p>
+  </div>
+
+  <div id="profile-box" class="card">
+    <div class="fan-card-head">
+      <div class="avatar" id="avatar-letter">?</div>
+      <div id="profile-summary"></div>
+    </div>
+    <details class="profile-editor">
+      <summary>ویرایش پروفایل</summary>
+      <div class="profile-fields">
+        <input id="fav-team" placeholder="تیم محبوب">
+        <input id="fav-player" placeholder="بازیکن محبوب">
+        <textarea id="bio" placeholder="یه بایوی کوتاه بنویس..."></textarea>
+        <button onclick="saveProfile()">ذخیره پروفایل</button>
+      </div>
+    </details>
+  </div>
+
+  <div id="app-box">
+    <div class="scoreboard">
+      <div class="vs-line" id="match-title">— <span class="vs">vs</span> —</div>
+      <div class="meta" id="match-meta">در حال بارگذاری...</div>
+    </div>
+
+    <div class="feed-title">گزارش لحظه‌به‌لحظه</div>
+    <div id="comments"></div>
+
+    <div class="composer">
+      <textarea id="new-comment" placeholder="نظرت رو درباره این لحظه بنویس..."></textarea>
+      <div class="composer-row">
+        <input id="minute" type="number" placeholder="دقیقه" value="1">
+        <button onclick="postComment()">ارسال نظر</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API = "http://127.0.0.1:8000";
+let token = "";
+const matchId = 1;
+
+async function login() {
+  const username = document.getElementById("username").value;
+  const password = document.getElementById("password").value;
+
+  const form = new URLSearchParams();
+  form.append("username", username);
+  form.append("password", password);
+
+  const res = await fetch(`${API}/users/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: form
+  });
+
+  if (!res.ok) {
+    document.getElementById("login-status").innerText = "خطا در ورود";
+    return;
+  }
+
+  const data = await res.json();
+  token = data.access_token;
+  document.getElementById("login-box").style.display = "none";
+  document.getElementById("app-box").style.display = "block";
+  document.getElementById("profile-box").style.display = "block";
+  loadProfile();
+  loadMatch();
+  loadComments();
+}
+
+async function loadProfile() {
+  const res = await fetch(`${API}/users/me`, {
+    headers: { "Authorization": "Bearer " + token }
+  });
+  const user = await res.json();
+
+  document.getElementById("fav-team").value = user.favorite_team || "";
+  document.getElementById("fav-player").value = user.favorite_player || "";
+  document.getElementById("bio").value = user.bio || "";
+  document.getElementById("avatar-letter").innerText = user.username.charAt(0).toUpperCase();
+
+  document.getElementById("profile-summary").innerHTML =
+    `<b>${user.username}</b><br>تیم: ${user.favorite_team || "—"} · بازیکن: ${user.favorite_player || "—"}`;
+}
+
+async function saveProfile() {
+  const favorite_team = document.getElementById("fav-team").value;
+  const favorite_player = document.getElementById("fav-player").value;
+  const bio = document.getElementById("bio").value;
+
+  await fetch(`${API}/users/me`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify({ favorite_team, favorite_player, bio })
+  });
+
+  loadProfile();
+}
+
+async function loadMatch() {
+  const res = await fetch(`${API}/matches`);
+  const matches = await res.json();
+  const match = matches.find(m => m.id === matchId);
+  if (match) {
+    document.getElementById("match-title").innerHTML =
+      `${match.home_team} <span class="vs">vs</span> ${match.away_team}`;
+    document.getElementById("match-meta").innerText = "گزارش کاربران این بازی";
+  }
+}
+
+async function loadComments() {
+  const res = await fetch(`${API}/matches/${matchId}/comments`);
+  const allComments = await res.json();
+
+  const topLevel = allComments.filter(c => !c.parent_id);
+  const container = document.getElementById("comments");
+  container.innerHTML = "";
+
+  document.getElementById("match-meta").innerText = `${allComments.length} نظر ثبت شده`;
+
+  for (const c of topLevel) {
+    const div = document.createElement("div");
+    div.className = "comment";
+
+    div.innerHTML = `
+      <span class="minute-badge">${c.minute}'</span>
+      <div class="comment-body">${c.content}</div>
+      <div class="comment-actions">
+        <button class="pill-btn" onclick="react(${c.id})">👍 لایک</button>
+        <span class="reaction-count" id="reaction-count-${c.id}"></span>
+        <button class="pill-btn" onclick="toggleReplyBox(${c.id})">💬 پاسخ</button>
+      </div>
+      <div class="reply-box" id="reply-box-${c.id}">
+        <textarea id="reply-text-${c.id}" placeholder="پاسخت..."></textarea>
+        <button onclick="postReply(${c.id})">ارسال پاسخ</button>
+      </div>
+      <div class="replies" id="replies-${c.id}"></div>
+    `;
+
+    container.appendChild(div);
+    loadReactionCount(c.id);
+    loadReplies(c.id);
+  }
+}
+
+function toggleReplyBox(commentId) {
+  const box = document.getElementById(`reply-box-${commentId}`);
+  box.style.display = box.style.display === "block" ? "none" : "block";
+}
+
+async function loadReactionCount(commentId) {
+  const res = await fetch(`${API}/comments/${commentId}/reactions`);
+  const reactions = await res.json();
+  document.getElementById(`reaction-count-${commentId}`).innerText = reactions.length;
+}
+
+async function loadReplies(commentId) {
+  const res = await fetch(`${API}/comments/${commentId}/replies`);
+  const replies = await res.json();
+  const container = document.getElementById(`replies-${commentId}`);
+  container.innerHTML = "";
+  replies.forEach(r => {
+    const div = document.createElement("div");
+    div.className = "reply-item";
+    div.innerText = `↳ ${r.content}`;
+    container.appendChild(div);
+  });
+}
+
+async function react(commentId) {
+  await fetch(`${API}/comments/${commentId}/reactions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify({ type: "like" })
+  });
+  loadReactionCount(commentId);
+}
+
+async function postReply(commentId) {
+  const content = document.getElementById(`reply-text-${commentId}`).value;
+
+  await fetch(`${API}/comments/${commentId}/reply`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify({ minute: 1, content: content })
+  });
+
+  document.getElementById(`reply-text-${commentId}`).value = "";
+  loadReplies(commentId);
+}
+
+async function postComment() {
+  const content = document.getElementById("new-comment").value;
+  const minute = document.getElementById("minute").value;
+
+  await fetch(`${API}/matches/${matchId}/comments`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify({ minute: parseInt(minute), content: content })
+  });
+
+  document.getElementById("new-comment").value = "";
+  loadComments();
+
+  setInterval(() => {
+  if (token) {
+    loadComments();
+  }
+}, 5000);
+}
+</script>
+</body>
+</html>
