@@ -1,6 +1,7 @@
 import requests
 
-API_KEY = "a8896fbecf3b4d9ca2bb7bca0ae74cb4"
+import os
+API_KEY = os.environ.get("FOOTBALL_API_KEY", "bac35b2d51dffe8aeeb0f320a2108542")
 BASE_URL = "https://api.football-data.org/v4"
 
 HEADERS = {"X-Auth-Token": API_KEY}
