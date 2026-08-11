@@ -195,6 +195,8 @@
     user-select: none;
   }
 
+  #matches-list-box { display: none; }
+
   .feed-title {
     font-size: 13px;
     font-weight: 700;
@@ -296,6 +298,23 @@
   .composer-row { display: flex; gap: 8px; align-items: flex-end; }
   .composer-row input { width: 90px; text-align: center; direction: ltr; font-family: 'JetBrains Mono', monospace; }
   .composer-row button { width: auto; padding: 11px 20px; }
+
+  .back-btn {
+    width: auto;
+    background: var(--panel-alt);
+    color: var(--ink-dim);
+    border: 1px solid var(--line);
+    padding: 6px 14px;
+    font-size: 12px;
+    margin-bottom: 10px;
+  }
+
+  .sync-btn {
+    margin-top: 12px;
+    background: var(--panel-alt);
+    color: var(--ink);
+    border: 1px solid var(--line);
+  }
 </style>
 </head>
 <body>
@@ -307,23 +326,23 @@
   </div>
 
   <div id="login-box" class="card">
-  <h3 id="form-title">ورود به حساب</h3>
+    <h3 id="form-title">ورود به حساب</h3>
 
-  <div id="email-field" style="display:none;">
-    <input id="email" type="email" placeholder="ایمیل">
+    <div id="email-field" style="display:none;">
+      <input id="email" type="email" placeholder="ایمیل">
+    </div>
+
+    <input id="username" placeholder="نام کاربری">
+    <input id="password" type="password" placeholder="رمز عبور">
+
+    <button id="submit-btn" onclick="login()">ورود</button>
+    <p id="login-status"></p>
+
+    <p style="text-align:center; font-size:13px; color:var(--ink-dim); margin-top:10px;">
+      <span id="toggle-text">حساب نداری؟</span>
+      <a href="#" id="toggle-link" onclick="toggleMode(); return false;" style="color:var(--gold);">ثبت‌نام کن</a>
+    </p>
   </div>
-
-  <input id="username" placeholder="نام کاربری">
-  <input id="password" type="password" placeholder="رمز عبور">
-
-  <button id="submit-btn" onclick="login()">ورود</button>
-  <p id="login-status"></p>
-
-  <p style="text-align:center; font-size:13px; color:var(--ink-dim); margin-top:10px;">
-    <span id="toggle-text">حساب نداری؟</span>
-    <a href="#" id="toggle-link" onclick="toggleMode(); return false;" style="color:var(--gold);">ثبت‌نام کن</a>
-  </p>
-</div>
 
   <div id="profile-box" class="card">
     <div class="fan-card-head">
@@ -340,18 +359,16 @@
       </div>
     </details>
   </div>
-  
-<div id="matches-list-box" class="card" style="display:none;">
-  <div class="feed-title" style="margin-top:0;">انتخاب بازی</div>
-  <div id="matches-list"></div>
-  <button onclick="syncMatches()" style="margin-top:12px; background:var(--panel-alt); color:var(--ink); border:1px solid var(--line);">
-    🔄 دریافت بازی‌های جدید
-  </button>
-</div>
+
+  <div id="matches-list-box" class="card">
+    <div class="feed-title" style="margin-top:0;">انتخاب بازی</div>
+    <div id="matches-list"></div>
+    <button class="sync-btn" onclick="syncMatches()">🔄 دریافت بازی‌های جدید</button>
+  </div>
 
   <div id="app-box">
-  <button onclick="backToMatches()" style="width:auto; background:var(--panel-alt); color:var(--ink-dim); border:1px solid var(--line); padding:6px 14px; font-size:12px; margin-bottom:10px;">← بازگشت به لیست بازی‌ها</button>
-  <div class="scoreboard">
+    <button class="back-btn" onclick="backToMatches()">← بازگشت به لیست بازی‌ها</button>
+    <div class="scoreboard">
       <div class="vs-line" id="match-title">— <span class="vs">vs</span> —</div>
       <div class="meta" id="match-meta">در حال بارگذاری...</div>
     </div>
@@ -374,7 +391,6 @@
 const API = "https://football-social.onrender.com";
 let token = "";
 let matchId = null;
-
 let isRegisterMode = false;
 
 function toggleMode() {
@@ -405,7 +421,6 @@ async function register() {
     return;
   }
 
-  // بعد از ثبت‌نام موفق، خودکار لاگین کن
   await login();
 }
 
@@ -431,7 +446,6 @@ async function login() {
   const data = await res.json();
   token = data.access_token;
   document.getElementById("login-box").style.display = "none";
-  document.getElementById("app-box").style.display = "block";
   document.getElementById("profile-box").style.display = "block";
   loadProfile();
   loadMatchesList();
@@ -467,6 +481,49 @@ async function saveProfile() {
   });
 
   loadProfile();
+}
+
+async function loadMatchesList() {
+  document.getElementById("matches-list-box").style.display = "block";
+  document.getElementById("app-box").style.display = "none";
+
+  const res = await fetch(`${API}/matches`);
+  const matches = await res.json();
+
+  const container = document.getElementById("matches-list");
+  container.innerHTML = "";
+
+  if (matches.length === 0) {
+    container.innerHTML = `<p style="color:var(--ink-dim); font-size:13px;">هیچ بازی‌ای نیست. دکمه پایین رو بزن.</p>`;
+    return;
+  }
+
+  matches.forEach(m => {
+    const div = document.createElement("div");
+    div.className = "comment";
+    div.style.cursor = "pointer";
+    div.innerHTML = `<div class="comment-body">${m.home_team} <span style="color:var(--gold)">vs</span> ${m.away_team}</div>`;
+    div.onclick = () => selectMatch(m.id);
+    container.appendChild(div);
+  });
+}
+
+async function syncMatches() {
+  await fetch(`${API}/matches/sync`, { method: "POST" });
+  loadMatchesList();
+}
+
+function selectMatch(id) {
+  matchId = id;
+  document.getElementById("matches-list-box").style.display = "none";
+  document.getElementById("app-box").style.display = "block";
+  loadMatch();
+  loadComments();
+}
+
+function backToMatches() {
+  matchId = null;
+  loadMatchesList();
 }
 
 async function loadMatch() {
@@ -582,56 +639,13 @@ async function postComment() {
 
   document.getElementById("new-comment").value = "";
   loadComments();
-
-  async function loadMatchesList() {
-  document.getElementById("matches-list-box").style.display = "block";
-  document.getElementById("app-box").style.display = "none";
-
-  const res = await fetch(`${API}/matches`);
-  const matches = await res.json();
-
-  const container = document.getElementById("matches-list");
-  container.innerHTML = "";
-
-  if (matches.length === 0) {
-    container.innerHTML = `<p style="color:var(--ink-dim); font-size:13px;">هیچ بازی‌ای نیست. دکمه پایین رو بزن.</p>`;
-    return;
-  }
-
-  matches.forEach(m => {
-    const div = document.createElement("div");
-    div.className = "comment";
-    div.style.cursor = "pointer";
-    div.innerHTML = `<div class="comment-body">${m.home_team} <span style="color:var(--gold)">vs</span> ${m.away_team}</div>`;
-    div.onclick = () => selectMatch(m.id);
-    container.appendChild(div);
-  });
 }
 
-async function syncMatches() {
-  await fetch(`${API}/matches/sync`, { method: "POST" });
-  loadMatchesList();
-}
-
-function selectMatch(id) {
-  matchId = id;
-  document.getElementById("matches-list-box").style.display = "none";
-  document.getElementById("app-box").style.display = "block";
-  loadMatch();
-  loadComments();
-}
-
-function backToMatches() {
-  matchId = null;
-  loadMatchesList();
-}
-
-  setInterval(() => {
-  if (token) {
+setInterval(() => {
+  if (token && matchId) {
     loadComments();
   }
 }, 5000);
-}
 </script>
 </body>
 </html>
