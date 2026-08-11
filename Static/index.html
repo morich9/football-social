@@ -307,12 +307,23 @@
   </div>
 
   <div id="login-box" class="card">
-    <h3>ورود به حساب</h3>
-    <input id="username" placeholder="نام کاربری" value="ali">
-    <input id="password" type="password" placeholder="رمز عبور" value="123456">
-    <button onclick="login()">ورود</button>
-    <p id="login-status"></p>
+  <h3 id="form-title">ورود به حساب</h3>
+
+  <div id="email-field" style="display:none;">
+    <input id="email" type="email" placeholder="ایمیل">
   </div>
+
+  <input id="username" placeholder="نام کاربری">
+  <input id="password" type="password" placeholder="رمز عبور">
+
+  <button id="submit-btn" onclick="login()">ورود</button>
+  <p id="login-status"></p>
+
+  <p style="text-align:center; font-size:13px; color:var(--ink-dim); margin-top:10px;">
+    <span id="toggle-text">حساب نداری؟</span>
+    <a href="#" id="toggle-link" onclick="toggleMode(); return false;" style="color:var(--gold);">ثبت‌نام کن</a>
+  </p>
+</div>
 
   <div id="profile-box" class="card">
     <div class="fan-card-head">
@@ -354,6 +365,40 @@
 const API = "https://football-social.onrender.com";
 let token = "";
 const matchId = 1;
+
+let isRegisterMode = false;
+
+function toggleMode() {
+  isRegisterMode = !isRegisterMode;
+  document.getElementById("email-field").style.display = isRegisterMode ? "block" : "none";
+  document.getElementById("form-title").innerText = isRegisterMode ? "ساخت حساب جدید" : "ورود به حساب";
+  document.getElementById("submit-btn").innerText = isRegisterMode ? "ثبت‌نام" : "ورود";
+  document.getElementById("submit-btn").onclick = isRegisterMode ? register : login;
+  document.getElementById("toggle-text").innerText = isRegisterMode ? "حساب داری؟" : "حساب نداری؟";
+  document.getElementById("toggle-link").innerText = isRegisterMode ? "وارد شو" : "ثبت‌نام کن";
+  document.getElementById("login-status").innerText = "";
+}
+
+async function register() {
+  const username = document.getElementById("username").value;
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  const res = await fetch(`${API}/users/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, email, password })
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    document.getElementById("login-status").innerText = err.detail || "خطا در ثبت‌نام";
+    return;
+  }
+
+  // بعد از ثبت‌نام موفق، خودکار لاگین کن
+  await login();
+}
 
 async function login() {
   const username = document.getElementById("username").value;
