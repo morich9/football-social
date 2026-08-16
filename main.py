@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from typing import List
 from fastapi.security import OAuth2PasswordRequestForm  
-import hashlib
+import security
 
 from database import engine, Base, SessionLocal
 import models
@@ -39,9 +39,6 @@ def get_db():
     finally:
         db.close()
 
-def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
-
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     payload = auth.decode_access_token(token)
     if payload is None:
@@ -61,8 +58,9 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
     new_user = models.User(
         username=user.username,
         email=user.email,
-        password_hash=hash_password(user.password)
+        password_hash=security.hash_password(user.password)
     )
+    ...
     db.add(new_user)
     try:
         db.commit()
@@ -75,7 +73,7 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
 @app.post("/users/login", response_model=schemas.Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.username == form_data.username).first()
-    if not user or user.password_hash != hash_password(form_data.password):
+    if not user or not security.verify_password(form_data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="یوزرنیم یا پسورد اشتباهه")
     token = auth.create_access_token({"sub": user.username, "user_id": user.id})
     return {"access_token": token, "token_type": "bearer"}
