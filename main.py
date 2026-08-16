@@ -11,6 +11,8 @@ import models
 import schemas
 import auth
 import football_api
+import os
+ADMIN_SECRET = os.environ.get("ADMIN_SECRET", "changeme123")
 
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -83,19 +85,21 @@ def get_me(current_user: models.User = Depends(get_current_user)):
     return current_user
 
 @app.post("/matches", response_model=schemas.MatchOut)
-def create_match(match: schemas.MatchCreate, db: Session = Depends(get_db)):
+def create_match(match: schemas.MatchCreate, admin_secret: str, db: Session = Depends(get_db)):
+    if admin_secret != ADMIN_SECRET:
+        raise HTTPException(status_code=403, detail="دسترسی نداری")
+
     new_match = models.Match(home_team=match.home_team, away_team=match.away_team)
     db.add(new_match)
     db.commit()
     db.refresh(new_match)
     return new_match
 
-@app.get("/matches", response_model=List[schemas.MatchOut])
-def list_matches(db: Session = Depends(get_db)):
-    return db.query(models.Match).all()
-
 @app.post("/matches/sync")
-def sync_matches(db: Session = Depends(get_db)):
+def sync_matches(admin_secret: str, db: Session = Depends(get_db)):
+    if admin_secret != ADMIN_SECRET:
+        raise HTTPException(status_code=403, detail="دسترسی نداری")
+
     data = football_api.get_scheduled_matches()
     added = 0
     for m in data.get("matches", []):
@@ -112,6 +116,10 @@ def sync_matches(db: Session = Depends(get_db)):
         added += 1
     db.commit()
     return {"added": added}
+
+@app.get("/matches", response_model=List[schemas.MatchOut])
+def list_matches(db: Session = Depends(get_db)):
+    return db.query(models.Match).all()
 
 @app.post("/matches/{match_id}/comments", response_model=schemas.CommentOut)
 def add_comment(match_id: int, comment: schemas.CommentCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
