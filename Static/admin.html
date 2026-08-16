@@ -98,7 +98,7 @@
   </div>
 
   <div id="panel" style="display:none;">
-
+    <p id="panel-status" style="text-align:center; font-size:13px; margin-bottom:12px;"></p>
     <div class="card">
       <h3>افزودن بازی دستی</h3>
       <input id="home-team" placeholder="تیم میزبان">
@@ -125,7 +125,7 @@ const API = "https://football-social.onrender.com";
 let adminSecret = "";
 
 function showStatus(msg, ok) {
-  const el = document.getElementById("status");
+  const el = document.getElementById("panel-status");
   el.innerText = msg;
   el.className = ok ? "ok" : "err";
 }
