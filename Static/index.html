@@ -513,16 +513,43 @@ async function syncMatches() {
   loadMatchesList();
 }
 
+let socket = null;
+
 function selectMatch(id) {
   matchId = id;
   document.getElementById("matches-list-box").style.display = "none";
   document.getElementById("app-box").style.display = "block";
   loadMatch();
   loadComments();
+  connectWebSocket(id);
+}
+
+function connectWebSocket(id) {
+  if (socket) {
+    socket.close();
+  }
+
+  const wsUrl = API.replace("https://", "wss://").replace("http://", "ws://") + `/ws/matches/${id}`;
+  socket = new WebSocket(wsUrl);
+
+  socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.type === "new_comment") {
+      loadComments();
+    }
+  };
+
+  socket.onclose = () => {
+    console.log("WebSocket بسته شد");
+  };
 }
 
 function backToMatches() {
   matchId = null;
+  if (socket) {
+    socket.close();
+    socket = null;
+  }
   loadMatchesList();
 }
 

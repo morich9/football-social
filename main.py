@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from typing import List
 from fastapi.security import OAuth2PasswordRequestForm  
+from fastapi import WebSocket, WebSocketDisconnect
+from ws_manager import manager
 import security
 
 from database import engine, Base, SessionLocal
@@ -140,23 +142,25 @@ def add_comment(match_id: int, comment: schemas.CommentCreate, db: Session = Dep
 def get_comments(match_id: int, db: Session = Depends(get_db)):
     return db.query(models.Comment).filter(models.Comment.match_id == match_id).order_by(models.Comment.minute).all()
 
-@app.post("/comments/{comment_id}/reply", response_model=schemas.CommentOut)
-def reply_to_comment(comment_id: int, comment: schemas.CommentCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    parent = db.query(models.Comment).filter(models.Comment.id == comment_id).first()
-    if not parent:
-        raise HTTPException(status_code=404, detail="Parent comment not found")
+@app.post("/matches/{match_id}/comments", response_model=schemas.CommentOut)
+async def add_comment(match_id: int, comment: schemas.CommentCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    match = db.query(models.Match).filter(models.Match.id == match_id).first()
+    if not match:
+        raise HTTPException(status_code=404, detail="بازی پیدا نشد")
 
-    new_reply = models.Comment(
-        match_id=parent.match_id,
+    new_comment = models.Comment(
+        match_id=match_id,
         user_id=current_user.id,
-        parent_id=comment_id,
-        minute=parent.minute,
+        minute=comment.minute,
         content=comment.content
     )
-    db.add(new_reply)
+    db.add(new_comment)
     db.commit()
-    db.refresh(new_reply)
-    return new_reply
+    db.refresh(new_comment)
+
+    await manager.broadcast(match_id, {"type": "new_comment"})
+
+    return new_comment
 
 @app.get("/comments/{comment_id}/replies", response_model=List[schemas.CommentOut])
 def get_replies(comment_id: int, db: Session = Depends(get_db)):
@@ -198,3 +202,12 @@ def live_matches():
 @app.get("/scheduled-matches")
 def scheduled_matches():
     return football_api.get_scheduled_matches()
+
+@app.websocket("/ws/matches/{match_id}")
+async def websocket_endpoint(websocket: WebSocket, match_id: int):
+    await manager.connect(match_id, websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(match_id, websocket)
