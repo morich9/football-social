@@ -363,7 +363,6 @@
   <div id="matches-list-box" class="card">
     <div class="feed-title" style="margin-top:0;">انتخاب بازی</div>
     <div id="matches-list"></div>
-    <button class="sync-btn" onclick="syncMatches()">🔄 دریافت بازی‌های جدید</button>
   </div>
 
   <div id="app-box">
@@ -506,11 +505,6 @@ async function loadMatchesList() {
     div.onclick = () => selectMatch(m.id);
     container.appendChild(div);
   });
-}
-
-async function syncMatches() {
-  await fetch(`${API}/matches/sync`, { method: "POST" });
-  loadMatchesList();
 }
 
 let socket = null;
